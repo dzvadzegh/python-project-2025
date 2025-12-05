@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from difflib import SequenceMatcher
 
 
 class Word:
@@ -11,8 +12,11 @@ class Word:
         next_repeat: datetime | None = None,
         repeat_count: int = 0,
         created_at: datetime | None = None,
-        difficulty: float = 0.5,
-        ml_score: float = 0.5,
+        base_difficulty: float = 0.5,  # базовая сложность слова
+        personal_difficulty: float = 0.5,  # сложность конкретно для пользователя
+        difficulty: float = 0.5,  # итоговая сложность (смесь)
+        stability: float = 1.0,  # "длина" интервала в днях
+        ml_score: float = 0.5,  # вероятность успеха
         history: list | None = None,
     ):
         self.id = word_id
@@ -22,12 +26,20 @@ class Word:
         self.next_repeat = next_repeat
         self.repeat_count = repeat_count
         self.created_at = created_at
+        self.base_difficulty = base_difficulty
+        self.personal_difficulty = personal_difficulty
         self.difficulty = difficulty
+        self.stability = stability
         self.ml_score = ml_score
         self.history = history
 
-    def check_translation(self, answer: str) -> bool:
-        return answer.strip().lower() == self.translation.lower()
+    def check_translation(self, answer: str, threshold: float = 0.8) -> bool:
+        """
+        Заглушка: сейчас проверка перевода не используется,
+        т.к. пользователь сам оценивает знание слова (rating 1–4).
+        Метод оставлен для совместимости с интерфейсом Checker.
+        """
+        return True
 
     def update_repeat(self):
         self.repeat_count += 1
@@ -39,9 +51,13 @@ class Word:
     def is_due(self) -> bool:
         return datetime.now(datetime.timezone.utc) >= self.next_repeat
 
-    def record_history(self, result: bool):
+    def record_history(self, rating: int, is_correct: bool) -> None:
         self.history.append(
-            {"timestamp": datetime.now(datetime.timezone.utc), "result": result}
+            {
+                "timestamp": datetime.utcnow().isoformat(),
+                "rating": rating,
+                "is_correct": is_correct,
+            }
         )
 
     def get_info(self):

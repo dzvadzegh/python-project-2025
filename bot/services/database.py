@@ -158,3 +158,4 @@ class Database:
                 "UPDATE words SET next_repeat=$1 WHERE user_id=$2 AND id=$3",
                 next_repeat, user_id, word_id
             )
+

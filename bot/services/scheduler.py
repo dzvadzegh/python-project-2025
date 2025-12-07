@@ -46,3 +46,4 @@ class Scheduler:
             users = await self.db.get_all_users()
             for user in users:
                 await self.notifier.send_motivation(user['user_id'])
+

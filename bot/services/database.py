@@ -45,21 +45,15 @@ class Database:
                 user_id
             )
 
-    async def add_word(self, word: str, user_id: int = None):
+    async def add_word(self, word: str, translation: str, user_id: int):
         async with self.pool.acquire() as conn:
-            if user_id is None:
-                await conn.execute(
-                    "INSERT INTO words (text) VALUES ($1) ON CONFLICT DO NOTHING",
-                    word
-                )
-            else:
-                await conn.execute(
-                    """
-                    INSERT INTO words (user_id, text)
-                    VALUES ($1, $2)
-                    """,
-                    user_id, word
-                )
+            await conn.execute(
+                """
+                INSERT INTO words (user_id, text, translation)
+                VALUES ($1, $2, $3)
+                """,
+                user_id, word, translation
+            )
 
     async def get_words_for_user(self, user_id: int):
         async with self.pool.acquire() as conn:
@@ -90,17 +84,6 @@ class Database:
                 WHERE id = $1
                 """,
                 word_id, repeat_count, difficulty
-            )
-
-    async def update_next_repeat(self, word_id: int, next_repeat):
-        async with self.pool.acquire() as conn:
-            await conn.execute(
-                """
-                UPDATE words
-                SET next_repeat = $2
-                WHERE id = $1
-                """,
-                word_id, next_repeat
             )
 
     async def get_all_words(self):
@@ -158,4 +141,3 @@ class Database:
                 "UPDATE words SET next_repeat=$1 WHERE user_id=$2 AND id=$3",
                 next_repeat, user_id, word_id
             )
-

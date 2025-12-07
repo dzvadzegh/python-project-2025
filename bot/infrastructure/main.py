@@ -6,7 +6,7 @@ from commands.start import router as start_router
 from commands.info import router as info_router
 from commands.stats import router as stats_router
 from commands.add import router as add_router
-from commands.settings import router as add_settings
+from commands.settings import router as settings_router
 
 from services.database import Database
 from services.notification import NotificationService

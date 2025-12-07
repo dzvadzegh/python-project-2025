@@ -2,7 +2,7 @@ import asyncpg
 from datetime import datetime, timezone, timedelta
 
 
-# кажется это надо вынести в .env
+# кажется это надо вынести в отдельный .env
 DB_USER = "arina"
 DB_PASSWORD = ""
 DB_NAME = "bot_db"

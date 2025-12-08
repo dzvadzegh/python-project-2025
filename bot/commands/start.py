@@ -37,7 +37,7 @@ async def bot_start(message: Message):
                 username=username,
                 settings={
                     "notification_time": '10:00',
-                    "reminders_per_day": 3,
+                    "reminders_per_day": 1,
                     "timezone": "UTC",
                     "language": "рус"
                 },

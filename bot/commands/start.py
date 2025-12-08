@@ -36,9 +36,10 @@ async def bot_start(message: Message):
                 user_id=user_id,
                 username=username,
                 settings={
+                    "notification_time": '10:00',
                     "reminders_per_day": 3,
                     "timezone": "UTC",
-                    "language": "en"
+                    "language": "рус"
                 },
                 progress={
                     "streak_days": 0,  # сколько дней подряд активен пользователь

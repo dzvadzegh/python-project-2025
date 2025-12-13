@@ -1,13 +1,6 @@
 import asyncpg
 from datetime import datetime, timezone, timedelta
-
-
-# кажется это надо вынести в отдельный .env
-DB_USER = "arina"
-DB_PASSWORD = ""
-DB_NAME = "bot_db"
-DB_HOST = "127.0.0.1"
-DB_PORT = 5432
+from infrastructure.config import DB_USER, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT
 
 
 class Database:
@@ -20,7 +13,7 @@ class Database:
             password=DB_PASSWORD,
             database=DB_NAME,
             host=DB_HOST,
-            port=DB_PORT
+            port=DB_PORT,
         )
 
     async def close(self):
@@ -35,14 +28,13 @@ class Database:
                 ON CONFLICT (user_id) DO NOTHING
                 """,
                 user_id,
-                username
+                username,
             )
 
     async def get_user(self, user_id: int):
         async with self.pool.acquire() as conn:
             return await conn.fetchrow(
-                "SELECT * FROM users WHERE user_id = $1",
-                user_id
+                "SELECT * FROM users WHERE user_id = $1", user_id
             )
 
     async def add_word(self, word: str, translation: str, user_id: int):
@@ -52,14 +44,9 @@ class Database:
                 INSERT INTO words (user_id, text, translation)
                 VALUES ($1, $2, $3)
                 """,
-                user_id, word, translation
-            )
-
-    async def get_words_for_user(self, user_id: int):
-        async with self.pool.acquire() as conn:
-            return await conn.fetch(
-                "SELECT * FROM words WHERE user_id = $1",
-                user_id
+                user_id,
+                word,
+                translation,
             )
 
     async def get_words_for_review(self, user_id: int):
@@ -71,10 +58,12 @@ class Database:
                 AND next_repeat <= NOW()
                 ORDER BY next_repeat ASC
                 """,
-                user_id
+                user_id,
             )
 
-    async def update_word_stats(self, word_id: int, repeat_count: int, difficulty: float):
+    async def update_word_stats(
+        self, word_id: int, repeat_count: int, difficulty: float
+    ):
         async with self.pool.acquire() as conn:
             await conn.execute(
                 """
@@ -83,7 +72,9 @@ class Database:
                     difficulty = $3
                 WHERE id = $1
                 """,
-                word_id, repeat_count, difficulty
+                word_id,
+                repeat_count,
+                difficulty,
             )
 
     async def get_all_words(self):
@@ -97,7 +88,8 @@ class Database:
                 INSERT INTO stats (user_id, score)
                 VALUES ($1, $2)
                 """,
-                user_id, score
+                user_id,
+                score,
             )
 
     async def log_activity(self, user_id: int, action: str):
@@ -112,15 +104,13 @@ class Database:
                     ))
                 WHERE user_id = $1
                 """,
-                user_id, action
+                user_id,
+                action,
             )
 
     async def get_user_stats(self, user_id: int):
         async with self.pool.acquire() as conn:
-            return await conn.fetch(
-                "SELECT * FROM stats WHERE user_id = $1",
-                user_id
-            )
+            return await conn.fetch("SELECT * FROM stats WHERE user_id = $1", user_id)
 
     async def get_all_users(self):
         async with self.pool.acquire() as conn:
@@ -128,16 +118,17 @@ class Database:
 
     async def get_user_words(self, user_id: int):
         async with self.pool.acquire() as conn:
-            return await conn.fetch(
-                "SELECT * FROM words WHERE user_id = $1",
-                user_id
-            )
+            return await conn.fetch("SELECT * FROM words WHERE user_id = $1", user_id)
 
-    async def update_word_next_repeat(self, user_id: int, word_id: int, next_repeat=None):
+    async def update_word_next_repeat(
+        self, user_id: int, word_id: int, next_repeat=None
+    ):
         if next_repeat is None:
             next_repeat = datetime.now(timezone.utc) + timedelta(days=1)
         async with self.pool.acquire() as conn:
             await conn.execute(
                 "UPDATE words SET next_repeat=$1 WHERE user_id=$2 AND id=$3",
-                next_repeat, user_id, word_id
+                next_repeat,
+                user_id,
+                word_id,
             )

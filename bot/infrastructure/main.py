@@ -12,6 +12,8 @@ from services.database import Database
 from services.notification import NotificationService
 from services.scheduler import Scheduler
 
+from infrastructure.config import BOT_TOKEN
+
 
 async def main():
     db = Database()
@@ -20,11 +22,9 @@ async def main():
     notifier = NotificationService(db)
     scheduler = Scheduler(db, notifier)
 
-    bot = Bot(
-        token="Tocken here", parse_mode=ParseMode.MARKDOWN
-    )  # TO DO .env для TOCKEN
-    dp = Dispatcher()
+    bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.MARKDOWN)
 
+    dp = Dispatcher()
     dp.include_router(start_router)
     dp.include_router(info_router)
     dp.include_router(stats_router)

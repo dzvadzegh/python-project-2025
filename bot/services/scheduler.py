@@ -9,21 +9,29 @@ class Scheduler:
         self.tasks = []
 
     def start(self):
-        loop = asyncio.get_event_loop()
-        loop.create_task(self.revise_words_task())
-        loop.create_task(self.daily_motivation_task())
+        asyncio.create_task(self.revise_words_task())
+        asyncio.create_task(self.daily_motivation_task())
 
     async def revise_words_task(self):
+        settings = user["settings"] or {}
+        reminders_per_day = settings.get("reminders_per_day", 1)
+        interval = 86400 // reminders_per_day
         while True:
             users = await self.db.get_all_users()
             for user in users:
-                words = await self.db.get_user_words(user['user_id'])
+                words = await self.db.get_user_words(user["user_id"])
                 now = datetime.now(timezone.utc)
                 for word in words:
-                    if word['next_repeat'] and word['next_repeat'] <= now:
-                        await self.notifier.send_word_reminder(user['user_id'], word['text'])
-                        await self.db.update_word_next_repeat(user['user_id'], word['id'])
-            await asyncio.sleep(60)
+                    if word["next_repeat"] and word["next_repeat"] <= now:
+                        await self.notifier.send_word_reminder(
+                            user["user_id"], word["text"]
+                        )
+                        await self.db.update_word_next_repeat(
+                            user["user_id"], word["id"]
+                        )
+                        break
+
+            await asyncio.sleep(interval)
 
     async def daily_motivation_task(self):
         daily_hour = 12
@@ -36,7 +44,7 @@ class Scheduler:
                 day=now.day,
                 hour=daily_hour,
                 minute=daily_minute,
-                tzinfo=timezone.utc
+                tzinfo=timezone.utc,
             )
             if next_run <= now:
                 next_run += timedelta(days=1)
@@ -45,5 +53,4 @@ class Scheduler:
 
             users = await self.db.get_all_users()
             for user in users:
-                await self.notifier.send_motivation(user['user_id'])
-
+                await self.notifier.send_motivation(user["user_id"])

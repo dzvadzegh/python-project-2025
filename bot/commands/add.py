@@ -8,12 +8,14 @@ from models.word import Word
 
 router = Router()
 
+
 class AddWordStates(StatesGroup):
     waiting_for_word_pair = State()
 
+
 @router.message(Command("add"))
 async def bot_add(message: Message):
-    db = message.bot.db
+    db = message.bot["db"]
     user_id = message.from_user.id
 
     word_pair = message.text.strip()[4:].strip()
@@ -22,25 +24,22 @@ async def bot_add(message: Message):
             "📝 *Добавление нового слова*\n\n"
             "Введите пару слов в формате:\n"
             "`/add слово:перевод`\n\n",
-            parse_mode="Markdown"
+            parse_mode="Markdown",
         )
         return
-    if not ':' in word_pair:
+    if not ":" in word_pair:
         await message.answer(
             "❌ *Неверный формат ввода* ❌\n\n"
             "Введите пару слов в формате:\n"
             "`/add слово:перевод`\n\n",
-            parse_mode="Markdown"
+            parse_mode="Markdown",
         )
         return
-    two_words = word_pair.split(':')
+    two_words = word_pair.split(":")
     word = two_words[0].strip()
     translation = two_words[1].strip()
     if not word or not translation:
-        await message.answer(
-            "Не введено слово или перевод",
-            parse_mode="Markdown"
-        )
+        await message.answer("Не введено слово или перевод", parse_mode="Markdown")
         return
     new_word = Word(
         word_id=0,
@@ -67,7 +66,4 @@ async def bot_add(message: Message):
         f"Добавить еще слово: /add\n"
         f"Посмотреть статистику: /stats"
     )
-    await message.answer(
-        success_message,
-        parse_mode="Markdown"
-    )
+    await message.answer(success_message, parse_mode="Markdown")

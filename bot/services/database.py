@@ -1,11 +1,26 @@
 import asyncpg
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.future import select
 from datetime import datetime, timezone, timedelta
+from models import User, Word, Stat, Base
 from infrastructure.config import DB_USER, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT
+
+DATABASE_URL = f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+engine = create_async_engine(DATABASE_URL, echo=True, future=True)
+
+AsyncSessionLocal = sessionmaker(
+    bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+)
 
 
 class Database:
     def __init__(self):
         self.pool = None
+        self.session = None
 
     async def connect(self):
         self.pool = await asyncpg.create_pool(
@@ -15,138 +30,54 @@ class Database:
             host=DB_HOST,
             port=DB_PORT,
         )
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
 
     async def close(self):
         await self.pool.close()
 
+    async def get_db(self):
+        if not self.session:
+            self.session = AsyncSessionLocal()
+        return self.session
+
     async def add_user(self, user_id: int, username: str):
-        async with self.pool.acquire() as conn:
-            await conn.execute(
-                """
-                INSERT INTO users (user_id, username, settings, progress, words_added)
-                VALUES ($1, $2, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb)
-                ON CONFLICT (user_id) DO NOTHING
-                """,
-                user_id,
-                username,
-            )
+        async with self.get_db() as session:
+            new_user = User(user_id=user_id, username=username)
+            session.add(new_user)
+            await session.commit()
 
     async def get_user(self, user_id: int):
-        async with self.pool.acquire() as conn:
-            return await conn.fetchrow(
-                "SELECT * FROM users WHERE user_id = $1", user_id
-            )
-
-    async def add_word(self, word: str, translation: str, user_id: int):
-        async with self.pool.acquire() as conn:
-            await conn.execute(
-                """
-                INSERT INTO words (user_id, text, translation)
-                VALUES ($1, $2, $3)
-                """,
-                user_id,
-                word,
-                translation,
-            )
-
-    async def get_words_for_review(self, user_id: int):
-        async with self.pool.acquire() as conn:
-            return await conn.fetch(
-                """
-                SELECT * FROM words
-                WHERE user_id = $1
-                AND next_repeat <= NOW()
-                ORDER BY next_repeat ASC
-                """,
-                user_id,
-            )
-
-    async def update_word_stats(
-        self, word_id: int, repeat_count: int, difficulty: float
-    ):
-        async with self.pool.acquire() as conn:
-            await conn.execute(
-                """
-                UPDATE words
-                SET repeat_count = $2,
-                    difficulty = $3
-                WHERE id = $1
-                """,
-                word_id,
-                repeat_count,
-                difficulty,
-            )
-
-    async def get_all_words(self):
-        async with self.pool.acquire() as conn:
-            return await conn.fetch("SELECT * FROM words")
-
-    async def add_stat(self, user_id: int, score: int):
-        async with self.pool.acquire() as conn:
-            await conn.execute(
-                """
-                INSERT INTO stats (user_id, score)
-                VALUES ($1, $2)
-                """,
-                user_id,
-                score,
-            )
-
-    async def log_activity(self, user_id: int, action: str):
-        async with self.pool.acquire() as conn:
-            await conn.execute(
-                """
-                UPDATE stats
-                SET activity_log = COALESCE(activity_log, '[]'::jsonb)
-                    || jsonb_build_array(jsonb_build_object(
-                        'timestamp', NOW(),
-                        'action', $2
-                    ))
-                WHERE user_id = $1
-                """,
-                user_id,
-                action,
-            )
-
-    async def get_user_stats(self, user_id: int):
-        async with self.pool.acquire() as conn:
-            return await conn.fetch("SELECT * FROM stats WHERE user_id = $1", user_id)
+        async with self.get_db() as session:
+            result = await session.execute(select(User).filter(User.user_id == user_id))
+            return result.scalars().first()
 
     async def get_all_users(self):
-        async with self.pool.acquire() as conn:
-            return await conn.fetch("SELECT * FROM users")
+        async with self.get_db() as session:
+            result = await session.execute(select(User))
+            return result.scalars().all()
 
     async def get_user_words(self, user_id: int):
-        async with self.pool.acquire() as conn:
-            return await conn.fetch("SELECT * FROM words WHERE user_id = $1", user_id)
+        async with self.get_db() as session:
+            result = await session.execute(select(Word).filter(Word.user_id == user_id))
+            return result.scalars().all()
 
-    async def update_word_next_repeat(
-        self, user_id: int, word_id: int, next_repeat=None
-    ):
+    # Обновление настроек пользователя и слов
+    async def update_word_next_repeat(self, user_id: int, word_id: int, next_repeat=None):
         if next_repeat is None:
             next_repeat = datetime.now(timezone.utc) + timedelta(days=1)
-        async with self.pool.acquire() as conn:
-            await conn.execute(
-                "UPDATE words SET next_repeat=$1 WHERE user_id=$2 AND id=$3",
-                next_repeat,
-                user_id,
-                word_id,
-            )
+        async with self.get_db() as session:
+            word = await session.get(Word, word_id)
+            if word and word.user_id == user_id:
+                word.next_repeat = next_repeat
+                await session.commit()
 
     async def update_user_setting(self, user_id: int, key: str, value):
-        async with self.pool.acquire() as conn:
-            await conn.execute(
-                """
-            UPDATE users
-            SET settings = jsonb_set(
-                COALESCE(settings, '{}'::jsonb),
-                $2,
-                to_jsonb($3),
-                true
-            )
-            WHERE user_id = $1
-            """,
-                user_id,
-                f"{{{key}}}",
-                value,
-            )
+        async with self.get_db() as session:
+            user = await session.get(User, user_id)
+            if user:
+                user.settings[key] = value
+                await session.commit()
+
+
+

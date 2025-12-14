@@ -132,3 +132,21 @@ class Database:
                 user_id,
                 word_id,
             )
+
+    async def update_user_setting(self, user_id: int, key: str, value):
+        async with self.pool.acquire() as conn:
+            await conn.execute(
+                """
+            UPDATE users
+            SET settings = jsonb_set(
+                COALESCE(settings, '{}'::jsonb),
+                $2,
+                to_jsonb($3),
+                true
+            )
+            WHERE user_id = $1
+            """,
+                user_id,
+                f"{{{key}}}",
+                value,
+            )

@@ -17,6 +17,7 @@ from infrastructure.config import BOT_TOKEN
 
 async def main():
     db = Database()
+    dp["db"] = db
     await db.connect()
 
     notifier = NotificationService(db)

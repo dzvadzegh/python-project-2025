@@ -4,7 +4,7 @@ from aiogram.filters import Command
 from aiogram.fsm.state import StatesGroup, State
 from datetime import datetime, timedelta
 
-from models.word import Word
+from bot.models.word import Word
 
 router = Router()
 

@@ -17,13 +17,15 @@ from infrastructure.config import BOT_TOKEN
 
 async def main():
     db = Database()
-    dp["db"] = db
     await db.connect()
 
     notifier = NotificationService(db)
     scheduler = Scheduler(db, notifier)
 
     bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.MARKDOWN)
+
+    dp = Dispatcher(bot)
+    dp.bot["db"] = db
 
     dp = Dispatcher()
     dp.include_router(start_router)

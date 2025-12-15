@@ -201,5 +201,11 @@ async def test_info_user_not_found():
     await bot_info(message)
 
     message.answer.assert_called_once()
-    answer_text = message.answer.call_args.kwargs.get('text', '')
-    assert "❌ Нет информации о пользователе ❌" in answer_text
+    call_args = message.answer.call_args
+    if call_args.args:
+        answer_text = call_args.args[0]
+    else:
+        answer_text = call_args.kwargs.get('text', '')
+
+    assert "❌ Нет информации о пользователе ❌" == answer_text
+    mock_db.get_user.assert_called_once_with(999)

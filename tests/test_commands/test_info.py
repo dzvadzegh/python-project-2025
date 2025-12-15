@@ -174,6 +174,17 @@ async def test_info_database_error():
 
     await bot_info(message)
 
+    mock_db.get_user.assert_called_once_with(123)
+    message.answer.assert_called_once()
+
+    call_args = message.answer.call_args
+    if call_args.args:
+        answer_text = call_args.args[0]
+    else:
+        answer_text = call_args.kwargs.get('text', '')
+
+    assert "Ошибка подключения к базе данных" in answer_text
+
 
 @pytest.mark.asyncio
 async def test_info_user_not_found():

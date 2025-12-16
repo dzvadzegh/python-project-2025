@@ -2,11 +2,11 @@ import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 
-from commands.start import router as start_router
-from commands.info import router as info_router
-from commands.stats import router as stats_router
-from commands.add import router as add_router
-from commands.settings import router as settings_router
+from commands.start import start_router
+from commands.info import info_router
+from commands.stats import stats_router
+from commands.add import add_router
+from commands.settings import settings_router
 
 from services.database import Database
 from services.notification import NotificationService
@@ -17,6 +17,7 @@ from infrastructure.config import BOT_TOKEN
 
 async def main():
     db = Database()
+    dp = Dispatcher()
     dp["db"] = db
     await db.connect()
 
@@ -25,7 +26,6 @@ async def main():
 
     bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.MARKDOWN)
 
-    dp = Dispatcher()
     dp.include_router(start_router)
     dp.include_router(info_router)
     dp.include_router(stats_router)

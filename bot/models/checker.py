@@ -1,13 +1,15 @@
 from datetime import datetime, timedelta
 from difflib import SequenceMatcher
-
+from stats import Stats
 from ml.src.ml_inference import predict_interval_and_score
 
+
 class Checker:
-    def __init__(self, user, word, answer: str):
+    def __init__(self, user, word, answer: str, stats: Stats | None = None):
         self.user = user
         self.word = word
         self.answer = answer.strip().lower()
+        self.stats = stats
         self.ml_result = {}
 
     def check(self) -> bool:
@@ -87,11 +89,20 @@ class Checker:
             "rating": self.ml_result.get("rating"),
         }
 
+    def _rate_answer(self) -> tuple[int, bool]:
+        """
+        Пример: если ответ совпал с переводом, считаем rating=4 (Easy),
+        иначе rating=1 (Again). Здесь можешь оставить свою реализацию.
+        """
+        is_correct = self.word.check_translation(self.answer)
+        rating = 4 if is_correct else 1
+        return rating, is_correct
+
     def evaluate_with_ml(self, ml_model=None) -> None:
         """
         Обновляет слово (difficulty, stability, next_repeat, ml_score)
         и заполняет self.ml_result.
-        Параметр ml_model оставлен для совместимости (можно не использовать).
+        Параметр ml_model оставлен для совместимости.
         """
         rating, is_correct = self._rate_answer()
 
@@ -139,3 +150,6 @@ class Checker:
             "next_repeat_days": days,
             "ml_score": ml_score,
         }
+
+        if self.stats is not None:
+            pass

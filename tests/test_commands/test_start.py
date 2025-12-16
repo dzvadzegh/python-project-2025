@@ -123,7 +123,7 @@ async def test_start_success_with_existing_user():
 
 
 @pytest.mark.asyncio
-async def test_info_database_error():
+async def test_start_database_error():
     """Тест обработки ошибок базы данных"""
     message = MagicMock()
     message.from_user = MagicMock(id=123)

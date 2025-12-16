@@ -3,13 +3,13 @@ from aiogram.types import Message
 from aiogram.filters import CommandStart
 from datetime import datetime
 
-from models.user import User
-from models.stats import Stats
+from bot.models.user import User
+from bot.models.stats import Stats
 
-router = Router()
+start_router = Router()
 
 
-@router.message(CommandStart())
+@start_router.message(CommandStart())
 async def bot_start(message: Message):
     db = message.bot["db"]
 
@@ -56,6 +56,8 @@ async def bot_start(message: Message):
             "/info - информация о настройках\n\n"
             "🚀 *Начните с добавления первого слова в словарь с помощью команды /add!*\n"
         )
+        db.add_user(user_id=user.user_id, username=user.username)
     #user.update_last_active() TODO: разобраться с этим
+
 
     await message.answer(text=welcome_text, parse_mode="Markdown")

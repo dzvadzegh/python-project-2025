@@ -11,53 +11,55 @@ start_router = Router()
 
 @start_router.message(CommandStart())
 async def bot_start(message: Message):
-    db = message.bot["db"]
+    try:
+        db = message.bot["db"]
 
-    user_id = message.from_user.id
-    username = message.from_user.username or message.from_user.first_name or ""
+        user_id = message.from_user.id
+        username = message.from_user.username or message.from_user.first_name or ""
 
-    user = await db.get_user(user_id)
-    if user:
-        welcome_text = (
-            f"👋 *С возвращением!*\n\n"
-            "🎯 *Доступные команды:*\n"
-            "/add - добавить новое слово с переводом в словарь\n"
-            "/stats - посмотреть статистику обучения\n"
-            "/settings - изменить настройки отправки напоминаний\n"
-            "/info - информация о настройках\n\n"
-            "Продолжаем учить слова! 📚"
-        )
-    else:
-        user = User(
-            user_id=user_id,
-            username=username,
-            settings={
-                "notification_time": "10:00",
-                "reminders_per_day": 1,
-                "timezone": "UTC",
-                "language": "рус",
-            },
-            progress={
-                "streak_days": 0,  # сколько дней подряд активен пользователь
-                "total_words": 0,  # всего выучено слов
-                "last_active": None,  # последняя активность
-            },
-            words_added={},
-            last_active=datetime.utcnow(),
-            stats=Stats(user_id=user_id),
-            ml_profile={"learning_rate": 1.0, "difficulty_preference": "medium"},
-        )
-        welcome_text = (
-            f"🎉 *Добро пожаловать в бот-напоминалку для изучения слов!*\n\n"
-            "🎯 *Доступные команды:*\n"
-            "/add - добавить новое слово с переводом в словарь\n"
-            "/stats - посмотреть статистику обучения\n"
-            "/settings - изменить настройки отправки напоминаний\n"
-            "/info - информация о настройках\n\n"
-            "🚀 *Начните с добавления первого слова в словарь с помощью команды /add!*\n"
-        )
-        db.add_user(user_id=user.user_id, username=user.username)
-    #user.update_last_active() TODO: разобраться с этим
+        user = await db.get_user(user_id)
+        if user:
+            welcome_text = (
+                f"👋 *С возвращением!*\n\n"
+                "🎯 *Доступные команды:*\n"
+                "/add - добавить новое слово с переводом в словарь\n"
+                "/stats - посмотреть статистику обучения\n"
+                "/settings - изменить настройки отправки напоминаний\n"
+                "/info - информация о настройках\n\n"
+                "Продолжаем учить слова! 📚"
+            )
+        else:
+            user = User(
+                user_id=user_id,
+                username=username,
+                settings={
+                    "notification_time": "10:00",
+                    "reminders_per_day": 1,
+                    "timezone": "UTC",
+                    "language": "рус",
+                },
+                progress={
+                    "streak_days": 0,  # сколько дней подряд активен пользователь
+                    "total_words": 0,  # всего выучено слов
+                    "last_active": None,  # последняя активность
+                },
+                words_added={},
+                last_active=datetime.utcnow(),
+                stats=Stats(user_id=user_id),
+                ml_profile={"learning_rate": 1.0, "difficulty_preference": "medium"},
+            )
+            welcome_text = (
+                f"🎉 *Добро пожаловать в бот-напоминалку для изучения слов!*\n\n"
+                "🎯 *Доступные команды:*\n"
+                "/add - добавить новое слово с переводом в словарь\n"
+                "/stats - посмотреть статистику обучения\n"
+                "/settings - изменить настройки отправки напоминаний\n"
+                "/info - информация о настройках\n\n"
+                "🚀 *Начните с добавления первого слова в словарь с помощью команды /add!*\n"
+            )
+            db.add_user(user_id=user.user_id, username=user.username)
+        #user.update_last_active() TODO: разобраться с этим
+        await message.answer(text=welcome_text, parse_mode="Markdown")
 
-
-    await message.answer(text=welcome_text, parse_mode="Markdown")
+    except Exception:
+        await message.answer("Ошибка подключения к базе данных")

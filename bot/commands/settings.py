@@ -4,10 +4,10 @@ from aiogram.filters import Command
 
 from services.parser import parse_settings_command, ParseError
 
-router = Router()
+settings_router = Router()
 
 
-@router.message(Command("settings"))
+@settings_router.message(Command("settings"))
 async def bot_settings(message: Message):
     db = message.bot["db"]
     user_id = message.from_user.id

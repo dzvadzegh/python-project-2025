@@ -6,14 +6,14 @@ from aiogram.fsm.state import StatesGroup, State
 from services.parser import parse_add_command, ParseError
 
 
-router = Router()
+add_router = Router()
 
 
 class AddWordStates(StatesGroup):
     waiting_for_word_pair = State()
 
 
-@router.message(Command("add"))
+@add_router.message(Command("add"))
 async def bot_add(message: Message):
     db = message.bot["db"]
     user_id = message.from_user.id

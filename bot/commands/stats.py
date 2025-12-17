@@ -2,10 +2,10 @@ from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import Command
 
-router = Router()
+stats_router = Router()
 
 
-@router.message(Command("stats"))
+@stats_router.message(Command("stats"))
 async def bot_stats(message: Message):
     db = message.bot["db"]
     user_id = message.from_user.id

@@ -6,10 +6,10 @@ from datetime import datetime
 from models.user import User
 from models.stats import Stats
 
-router = Router()
+start_router = Router()
 
 
-@router.message(CommandStart())
+@start_router.message(CommandStart())
 async def bot_start(message: Message):
     db = message.bot["db"]
 

@@ -21,7 +21,10 @@ class Scheduler:
             for user in users:
                 settings = user.settings or {}
                 reminders_per_day = settings.get("reminders_per_day", 1)
-                interval = 86400 // reminders_per_day  # Интервал в секундах между напоминаниями
+                new_var = 86400
+                interval = (
+                    new_var // reminders_per_day
+                )  # Интервал в секундах между напоминаниями
 
                 words = await self.db.get_user_words(user.user_id)
                 for word in words:
@@ -31,7 +34,9 @@ class Scheduler:
 
                         # Обновляем время следующего повторения
                         next_repeat = now + timedelta(seconds=interval)
-                        await self.db.update_word_next_repeat(user.user_id, word.id, next_repeat)
+                        await self.db.update_word_next_repeat(
+                            user.user_id, word.id, next_repeat
+                        )
 
                         break  # Прерываем цикл, если слово отправлено для напоминания
 
@@ -64,4 +69,3 @@ class Scheduler:
             users = await self.db.get_all_users()
             for user in users:
                 await self.notifier.send_motivation(user.user_id)
-

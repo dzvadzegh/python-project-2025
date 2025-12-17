@@ -17,6 +17,12 @@ class Stats:
 
     def update(self, word_id: int, result: bool):
         self.activity_log.append({"word_id": word_id, "result": result})
+        if result:
+            self.learned_words += 1
+
+        total = len(self.activity_log)
+        correct = sum(1 for a in self.activity_log if a["result"])
+        self.success_rate = (correct / total) * 100 if total else 0.0
 
     def get_statistics(self):
         return {

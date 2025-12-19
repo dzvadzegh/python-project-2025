@@ -2,48 +2,43 @@ from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import Command
 
+from bot.models.stats import Stats
+
 stats_router = Router()
 
 
 @stats_router.message(Command("stats"))
 async def bot_stats(message: Message):
+    """
+    Команда /stats — выводит прогресс изучения слов для текущего пользователя.
+    """
     db = message.bot["db"]
-    user_id = message.from_user.id
+    tg_user_id = message.from_user.id
 
-    user = await db.get_user(user_id)
-    if not user:
+    user_row = await db.fetch_one(
+        "SELECT id FROM user WHERE user_id = :tg_id",
+        {"tg_id": tg_user_id},
+    )
+    if not user_row:
         await message.answer(
             "Похоже, вы ещё не зарегистрированы.\n"
             "Нажмите /start, чтобы начать пользоваться ботом."
         )
         return
 
-    stats = await db.get_user_stats(user_id)
-    if not stats:
-        await message.answer(
-            "У вас пока нет статистики.\n" "Добавьте первое слово с помощью /add"
-        )
-        return
+    internal_user_id = user_row["id"]
 
-    activity_log = stats.activity_log or []
-
-    total_actions = len(activity_log)
-    added_words = sum(
-        1 for a in activity_log if a.get("action", "").startswith("add_word")
-    )
-
-    success_rate = stats.success_rate or 0.0
-    learned_words = stats.learned_words or 0
-
-    last_activity = activity_log[-1]["timestamp"] if activity_log else "—"
+    stats_model = Stats(user_id=internal_user_id, db=db)
+    stats = await stats_model.load()
 
     text = (
         "*Ваша статистика изучения слов*\n\n"
-        f"Добавлено слов: *{added_words}*\n"
-        f"Выучено слов: *{learned_words}*\n"
-        f"Успешность: *{success_rate:.1f}%*\n"
-        f"Всего действий: *{total_actions}*\n"
-        f"Последняя активность: *{last_activity}*"
+        f"Всего слов в словаре: *{stats.total_words}*\n"
+        f"Выучено слов: *{stats.learned_words}* "
+        f"({stats.success_rate}% от всех)\n\n"
+        f"За последнюю неделю: *+{stats.learned_week}* слов\n"
+        f"За последний месяц: *+{stats.learned_month}* слов\n\n"
+        f"Всего зафиксировано действий: *{stats.activity_records}*"
     )
 
     await message.answer(text, parse_mode="Markdown")

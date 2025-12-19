@@ -2,14 +2,15 @@ from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import Command
 
-from services.parser import parse_settings_command, ParseError
+from bot.services.parser import parse_settings_command, ParseError
 
 settings_router = Router()
 
 
 @settings_router.message(Command("settings"))
 async def bot_settings(message: Message):
-    db = message.bot["db"]
+    db = message.bot.db
+
     user_id = message.from_user.id
 
     try:

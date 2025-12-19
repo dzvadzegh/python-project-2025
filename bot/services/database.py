@@ -12,13 +12,13 @@ from sqlalchemy import (
     update,
     select,
 )
-from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.dialects.postgresql import JSONB, insert as pg_insert
 from datetime import datetime, timezone, timedelta
 
-from infrastructure.config import DB_USER, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT
-from models.user import User
-from models.stats import Stats
-from models.word import Word
+from bot.infrastructure.config import DB_USER, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT
+from bot.models.user import User
+from bot.models.stats import Stats
+from bot.models.word import Word
 
 
 DATABASE_URL = (
@@ -40,7 +40,11 @@ users = Table(
     Column("settings", JSON, default=dict),
     Column("progress", JSON, default=dict),
     Column("words_added", JSON, default=dict),
-    Column("last_active", DateTime, default=lambda: datetime.now(timezone.utc)),
+    Column(
+        "last_active",
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+    ),
     Column("ml_profile", JSON, default=dict),
 )
 
@@ -51,9 +55,13 @@ words = Table(
     Column("user_id", Integer),
     Column("text", String),
     Column("translation", String),
-    Column("next_repeat", DateTime),
+    Column("next_repeat", DateTime(timezone=True)),
     Column("repeat_count", Integer, default=0),
-    Column("created_at", DateTime, default=lambda: datetime.now(timezone.utc)),
+    Column(
+        "created_at",
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+    ),
     Column("base_difficulty", Float, default=0.5),
     Column("personal_difficulty", Float, default=0.5),
     Column("difficulty", Float, default=0.5),
@@ -68,9 +76,9 @@ stats = Table(
     Column("user_id", Integer, primary_key=True),
     Column("learned_words", Integer, default=0),
     Column("success_rate", Float, default=0.0),
-    Column("activity_log", JSON, default=list),
-    Column("histogram_data", JSON, default=dict),
-    Column("ml_stats", JSON, default=dict),
+    Column("activity_log", JSONB, default=list),
+    Column("histogram_data", JSONB, default=dict),
+    Column("ml_stats", JSONB, default=dict),
 )
 
 

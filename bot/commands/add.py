@@ -3,8 +3,7 @@ from aiogram.types import Message
 from aiogram.filters import Command
 from aiogram.fsm.state import StatesGroup, State
 
-from services.parser import parse_add_command, ParseError
-
+from bot.services.parser import parse_add_command, ParseError
 
 add_router = Router()
 
@@ -15,7 +14,7 @@ class AddWordStates(StatesGroup):
 
 @add_router.message(Command("add"))
 async def bot_add(message: Message):
-    db = message.bot["db"]
+    db = message.bot.db
     user_id = message.from_user.id
 
     try:

@@ -12,7 +12,8 @@ async def bot_stats(message: Message):
     """
     Команда /stats — выводит прогресс изучения слов для текущего пользователя.
     """
-    db = message.bot["db"]
+    db = message.bot.db
+
     tg_user_id = message.from_user.id
 
     user_row = await db.fetch_one(

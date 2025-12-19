@@ -1,88 +1,35 @@
-from dataclasses import dataclass
-
-
-@dataclass
-class StatsDTO:
-    total_words: int
-    learned_words: int
-    success_rate: float
-    learned_week: int
-    learned_month: int
-    activity_records: int
-
-
 class Stats:
-    def __init__(self, user_id: int, db, min_repetitions: int = 3):
+    def __init__(
+        self,
+        user_id: int,
+        learned_words: int = 0,
+        success_rate: float = 0.0,
+        activity_log: list | None = None,
+        histogram_data: dict | None = None,
+        ml_stats: dict | None = None,
+    ):
         self.user_id = user_id
-        self.db = db
-        self.min_repetitions = min_repetitions
+        self.learned_words = learned_words
+        self.success_rate = success_rate
+        self.activity_log = activity_log
+        self.histogram_data = histogram_data
+        self.ml_stats = ml_stats
 
-    async def update(self, word_id: int, is_correct: bool) -> None:
-        """
-        Записать факт ответа пользователя в таблицу stat.
-        """
-        await self.db.execute(
-            """
-            INSERT INTO stat (user_id, action_type, details, created_at)
-            VALUES (:user_id, :action_type, :details, NOW())
-            """,
-            {
-                "user_id": self.user_id,
-                "action_type": "answer_correct" if is_correct else "answer_wrong",
-                "details": {"word_id": word_id},
-            },
-        )
+    def update(self, word_id: int, result: bool):
+        self.activity_log.append({"word_id": word_id, "result": result})
+        if result:
+            self.learned_words += 1
 
+        total = len(self.activity_log)
+        correct = sum(1 for a in self.activity_log if a["result"])
+        self.success_rate = (correct / total) * 100 if total else 0.0
 
-    async def load(self) -> StatsDTO:
-        total_words = await self.db.fetch_val(
-            "SELECT COUNT(*) FROM word WHERE user_id = :user_id",
-            {"user_id": self.user_id},
-        )
+    def get_statistics(self):
+        return {
+            "learned_words": self.learned_words,
+            "success_rate": self.success_rate,
+            "activity_records": len(self.activity_log),
+        }
 
-        learned_words = await self.db.fetch_val(
-            """
-            SELECT COUNT(*) FROM word
-            WHERE user_id = :user_id
-              AND repetitions >= :min_rep
-            """,
-            {"user_id": self.user_id, "min_rep": self.min_repetitions},
-        )
-
-        learned_week = await self.db.fetch_val(
-            """
-            SELECT COUNT(*) FROM stat
-            WHERE user_id = :user_id
-              AND action_type = 'word_learned'
-              AND created_at >= NOW() - INTERVAL '7 days'
-            """,
-            {"user_id": self.user_id},
-        )
-
-        learned_month = await self.db.fetch_val(
-            """
-            SELECT COUNT(*) FROM stat
-            WHERE user_id = :user_id
-              AND action_type = 'word_learned'
-              AND created_at >= NOW() - INTERVAL '30 days'
-            """,
-            {"user_id": self.user_id},
-        )
-
-        activity_records = await self.db.fetch_val(
-            "SELECT COUNT(*) FROM stat WHERE user_id = :user_id",
-            {"user_id": self.user_id},
-        )
-
-        success_rate = 0.0
-        if total_words:
-            success_rate = round(learned_words / total_words * 100, 1)
-
-        return StatsDTO(
-            total_words=total_words,
-            learned_words=learned_words,
-            success_rate=success_rate,
-            learned_week=learned_week,
-            learned_month=learned_month,
-            activity_records=activity_records,
-        )
+    def get_histogram(self):
+        return self.histogram_data

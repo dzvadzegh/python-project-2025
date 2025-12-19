@@ -2,7 +2,7 @@ from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import Command
 
-from services.parser import parse_add_command, ParseError
+from bot.services.parser import parse_add_command, ParseError
 
 info_router = Router()
 
@@ -10,7 +10,7 @@ info_router = Router()
 @info_router.message(Command("info"))
 async def bot_info(message: Message):
     try:
-        db = message.bot["db"]
+        db = message.bot.db
         user_id = message.from_user.id
         user_data = await db.get_user(user_id)
         if user_data is None:

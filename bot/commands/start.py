@@ -12,7 +12,7 @@ start_router = Router()
 @start_router.message(CommandStart())
 async def bot_start(message: Message):
     try:
-        db = message.bot["db"]
+        db = message.bot.db
 
         user_id = message.from_user.id
         username = message.from_user.username or message.from_user.first_name or ""
@@ -58,7 +58,7 @@ async def bot_start(message: Message):
                 "🚀 *Начните с добавления первого слова в словарь с помощью команды /add!*\n"
             )
             db.add_user(user_id=user.user_id, username=user.username)
-        #user.update_last_active() TODO: разобраться с этим
+        # user.update_last_active() TODO: разобраться с этим
         await message.answer(text=welcome_text, parse_mode="Markdown")
 
     except Exception:

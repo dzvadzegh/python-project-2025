@@ -14,10 +14,13 @@ async def bot_info(message: Message):
         user_id = message.from_user.id
         user_data = await db.get_user(user_id)
         if user_data is None:
-            await message.answer("❌ Нет информации о пользователе ❌")
+            await message.answer(
+                "Вы ещё не зарегистрированы.\n"
+                "Нажмите /start, чтобы начать пользоваться ботом."
+            )
             return
 
-        settings = user_data.get("settings", {}) if user_data else {}
+        settings = user_data.settings or {}
         notification_time = settings.get("notification_time", "10:00")
         reminders_per_day = settings.get("reminders_per_day", 1)
         timezone = settings.get("timezone", "UTC")
@@ -33,5 +36,5 @@ async def bot_info(message: Message):
         )
         await message.answer(text=info_message, parse_mode="Markdown")
 
-    except Exception:
-        await message.answer("Ошибка подключения к базе данных")
+    except Exception as e:
+        await message.answer(f"Ошибка подключения к базе данных as {e}")

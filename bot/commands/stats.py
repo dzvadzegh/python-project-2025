@@ -4,10 +4,10 @@ from aiogram.filters import Command
 
 from bot.models.stats import Stats
 
-router = Router()
+stats_router = Router()
 
 
-@router.message(Command("stats"))
+@stats_router.message(Command("stats"))
 async def bot_stats(message: Message):
     """
     Команда /stats — выводит прогресс изучения слов для текущего пользователя.
@@ -42,4 +42,3 @@ async def bot_stats(message: Message):
     )
 
     await message.answer(text, parse_mode="Markdown")
-

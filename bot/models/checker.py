@@ -20,9 +20,7 @@ class Checker:
         rating: 1=Again, 2=Hard, 3=Good, 4=Easy
         """
         self.word.repeat_count += 1
-
         is_correct = rating >= 3
-
         if is_correct:
             self.word.personal_difficulty = max(
                 0.0,
@@ -33,12 +31,9 @@ class Checker:
                 1.0,
                 self.word.personal_difficulty * 1.10,
             )
-
         self.word.difficulty = (
-            0.7 * self.word.base_difficulty +
-            0.3 * self.word.personal_difficulty
+            0.7 * self.word.base_difficulty + 0.3 * self.word.personal_difficulty
         )
-
         features = {
             "base_difficulty": self.word.base_difficulty,
             "personal_difficulty": self.word.personal_difficulty,
@@ -47,18 +42,13 @@ class Checker:
             "stability": self.word.stability,
             "user_rating": rating,
         }
-
         interval_days, ml_score = predict_interval_and_score(features)
-
         self.word.ml_score = ml_score
         self.word.stability = max(1.0, float(interval_days))
-
         days = max(1, int(round(interval_days)))
         self.word.next_repeat = datetime.utcnow() + timedelta(days=days)
-
         if hasattr(self.word, "add_history_event"):
             self.word.add_history_event(rating=rating, is_correct=is_correct)
-
         self.ml_result = {
             "rating": rating,
             "correct": is_correct,
@@ -105,9 +95,7 @@ class Checker:
         Параметр ml_model оставлен для совместимости.
         """
         rating, is_correct = self._rate_answer()
-
         self.word.repeat_count += 1
-
         if is_correct:
             self.word.personal_difficulty = max(
                 0.0,
@@ -118,12 +106,9 @@ class Checker:
                 1.0,
                 self.word.personal_difficulty * 1.10,
             )
-
         self.word.difficulty = (
-                0.7 * self.word.base_difficulty +
-                0.3 * self.word.personal_difficulty
+            0.7 * self.word.base_difficulty + 0.3 * self.word.personal_difficulty
         )
-
         features = {
             "base_difficulty": self.word.base_difficulty,
             "personal_difficulty": self.word.personal_difficulty,
@@ -132,18 +117,13 @@ class Checker:
             "stability": self.word.stability,
             "user_rating": rating,
         }
-
         interval_days, ml_score = predict_interval_and_score(features)
-
         self.word.ml_score = ml_score
         self.word.stability = max(1.0, float(interval_days))
-
         days = max(1, int(round(interval_days)))
         self.word.next_repeat = datetime.utcnow() + timedelta(days=days)
-
         if hasattr(self.word, "add_history_event"):
             self.word.add_history_event(rating=rating, is_correct=is_correct)
-
         self.ml_result = {
             "rating": rating,
             "correct": is_correct,

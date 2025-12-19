@@ -2,21 +2,27 @@ from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import Command
 
-router = Router()
+from services.parser import parse_settings_command, ParseError
+
+settings_router = Router()
 
 
-@router.message(Command("settings"))
+@settings_router.message(Command("settings"))
 async def bot_settings(message: Message):
     db = message.bot["db"]
     user_id = message.from_user.id
 
-    parts = message.text.strip().split()
+    try:
+        new_value = parse_settings_command(message.text)
+    except ParseError as e:
+        await message.answer(str(e))
+        return
 
     user = await db.get_user(user_id)
-    settings = user["settings"] or {}
+    settings = user.settings or {}
     current = settings.get("reminders_per_day", 1)
 
-    if len(parts) == 1:
+    if new_value is None:
         await message.answer(
             f"⚙️ *Настройки*\n\n"
             f"🔔 Напоминаний в день: {current}\n\n"
@@ -26,20 +32,9 @@ async def bot_settings(message: Message):
         )
         return
 
-    if len(parts) == 2:
-        if not parts[1].isdigit():
-            await message.answer("Нужно указать число")
-            return
+    await db.update_user_setting(user_id, "reminders_per_day", new_value)
 
-        count = int(parts[1])
-        if count < 1 or count > 23:
-            await message.answer("Число должно быть от 1 до 23")
-            return
-
-        await db.update_user_setting(
-            user_id,
-            "reminders_per_day",
-            count,
-        )
-
-        await message.answer(f"Теперь напоминаний в день: {count}")
+    await message.answer(
+        f"✅ Теперь напоминаний в день: {new_value}",
+        parse_mode="Markdown",
+    )

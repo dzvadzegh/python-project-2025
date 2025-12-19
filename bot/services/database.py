@@ -37,15 +37,15 @@ users = Table(
     metadata,
     Column("user_id", Integer, primary_key=True),
     Column("username", String),
-    Column("settings", JSON, default=dict),
-    Column("progress", JSON, default=dict),
-    Column("words_added", JSON, default=dict),
+    Column("settings", JSONB, default=dict),
+    Column("progress", JSONB, default=dict),
+    Column("words_added", JSONB, default=dict),
     Column(
         "last_active",
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
     ),
-    Column("ml_profile", JSON, default=dict),
+    Column("ml_profile", JSONB, default=dict),
 )
 
 words = Table(
@@ -67,7 +67,7 @@ words = Table(
     Column("difficulty", Float, default=0.5),
     Column("stability", Float, default=1.0),
     Column("ml_score", Float, default=0.5),
-    Column("history", JSON, default=list),
+    Column("history", JSONB, default=list),
 )
 
 stats = Table(
@@ -151,10 +151,16 @@ class Database:
 
     async def update_user_setting(self, user_id: int, key: str, value):
         async with AsyncSessionLocal() as session:
+            result = await session.execute(
+                select(users.c.settings).where(users.c.user_id == user_id)
+            )
+            row = result.fetchone()
+            current_settings = row.settings or {}
+            current_settings[key] = value
             stmt = (
                 update(users)
                 .where(users.c.user_id == user_id)
-                .values(settings=users.c.settings.op("||")({key: value}))
+                .values(settings=current_settings)
             )
             await session.execute(stmt)
             await session.commit()

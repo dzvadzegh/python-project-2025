@@ -28,7 +28,8 @@ async def bot_settings(message: Message):
             f"⚙️ *Настройки*\n\n"
             f"🔔 Напоминаний в день: {current}\n\n"
             f"Чтобы изменить, напишите:\n"
-            f"`/settings 1` или `/settings 3`",
+            f"`/settings число(кол-во напоминаний в день)`"
+            f"Например, /settings 1",
             parse_mode="Markdown",
         )
         return
@@ -36,6 +37,6 @@ async def bot_settings(message: Message):
     await db.update_user_setting(user_id, "reminders_per_day", new_value)
 
     await message.answer(
-        f"✅ Теперь напоминаний в день: {new_value}",
+        f"Теперь напоминаний в день: {new_value}",
         parse_mode="Markdown",
     )

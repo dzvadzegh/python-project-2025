@@ -33,6 +33,7 @@ class Stats:
             },
         )
 
+
     async def load(self) -> StatsDTO:
         total_words = await self.db.fetch_val(
             "SELECT COUNT(*) FROM word WHERE user_id = :user_id",

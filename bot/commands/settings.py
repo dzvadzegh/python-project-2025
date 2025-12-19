@@ -20,6 +20,12 @@ async def bot_settings(message: Message):
         return
 
     user = await db.get_user(user_id)
+    if not user:
+        await message.answer(
+            "Вы ещё не зарегистрированы.\n"
+            "Нажмите /start, чтобы начать пользоваться ботом."
+        )
+        return
     settings = user.settings or {}
     current = settings.get("reminders_per_day", 1)
 
@@ -28,8 +34,8 @@ async def bot_settings(message: Message):
             f"⚙️ *Настройки*\n\n"
             f"🔔 Напоминаний в день: {current}\n\n"
             f"Чтобы изменить, напишите:\n"
-            f"`/settings число(кол-во напоминаний в день)`"
-            f"Например, /settings 1",
+            f"`/settings число(кол-во напоминаний в день)`\n"
+            f"`Пример ввода: /settings 1`",
             parse_mode="Markdown",
         )
         return

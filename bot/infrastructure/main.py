@@ -13,18 +13,21 @@ from services.notification import NotificationService
 from services.scheduler import Scheduler
 
 from infrastructure.config import BOT_TOKEN
+from infrastructure.telegram_io import TelegramIO
 
 
 async def main():
-    db = Database()
-    dp = Dispatcher()
-    dp["db"] = db
-    await db.connect()
-
-    notifier = NotificationService(db)
-    scheduler = Scheduler(db, notifier)
-
     bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.MARKDOWN)
+
+    db = Database()
+    dp = Dispatcher(bot)
+
+    await db.connect()
+    dp.bot["db"] = db
+
+    telegram_io = TelegramIO(bot)
+    notifier = NotificationService(db, telegram_io)
+    scheduler = Scheduler(db, notifier)
 
     dp.include_router(start_router)
     dp.include_router(info_router)
@@ -34,7 +37,7 @@ async def main():
 
     print("Everything ok")
 
-    asyncio.create_task(scheduler.start())
+    scheduler.start()
 
     try:
         await dp.start_polling(bot)

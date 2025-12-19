@@ -233,16 +233,33 @@ class Database:
                 "action": action,
             }
 
+            # 1. Получаем текущий лог
+            result = await session.execute(
+                select(stats.c.activity_log).where(stats.c.user_id == user_id)
+            )
+            row = result.fetchone()
+
+            if row and row.activity_log:
+                activity_log = list(row.activity_log)
+            else:
+                activity_log = []
+
+            # 2. Добавляем новое событие
+            activity_log.append(new_activity)
+
+            # 3. Upsert
             await session.execute(
                 pg_insert(stats)
-                .values(user_id=user_id, activity_log=[new_activity])
+                .values(
+                    user_id=user_id,
+                    activity_log=activity_log,
+                )
                 .on_conflict_do_update(
                     index_elements=["user_id"],
-                    set_={
-                        "activity_log": stats.c.activity_log.op("||")([new_activity])
-                    },
+                    set_={"activity_log": activity_log},
                 )
             )
+
             await session.commit()
 
     async def get_user_stats(self, user_id: int):

@@ -14,23 +14,27 @@ class AddWordStates(StatesGroup):
 
 @add_router.message(Command("add"))
 async def bot_add(message: Message):
-    db = message.bot.db
-    user_id = message.from_user.id
-
     try:
-        word, translation = parse_add_command(message.text)
-    except ParseError as e:
-        await message.answer(str(e), parse_mode="Markdown")
-        return
+        db = message.bot.db
+        user_id = message.from_user.id
 
-    await db.add_word(word, translation, user_id)
+        try:
+            word, translation = parse_add_command(message.text)
+        except ParseError as e:
+            await message.answer(str(e), parse_mode="Markdown")
+            return
 
-    await db.log_activity(user_id, f"add_word:{word}")
-    success_message = (
-        f"✅ *Слово успешно добавлено!*\n\n"
-        f"📖 *Слово:* {word}\n"
-        f"🌐 *Перевод:* {translation}\n"
-        f"Добавить еще слово: /add\n"
-        f"Посмотреть статистику: /stats"
-    )
-    await message.answer(success_message, parse_mode="Markdown")
+        await db.add_word(text=word, translation=translation, user_id=user_id)
+
+        await db.log_activity(user_id, f"add_word:{word}")
+        success_message = (
+            f"✅ *Слово успешно добавлено!*\n\n"
+            f"📖 *Слово:* {word}\n"
+            f"🌐 *Перевод:* {translation}\n"
+            f"Добавить еще слово: /add\n"
+            f"Посмотреть статистику: /stats"
+        )
+        await message.answer(success_message, parse_mode="Markdown")
+
+    except Exception:
+        await message.answer("Ошибка подключения к базе данных")

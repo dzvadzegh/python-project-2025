@@ -97,36 +97,34 @@
 
 ### 3.2. Архитектура системы
 
-```mermaid
-graph TD
-    bot["bot/"] --> main["main.py"]
-    bot --> commands["commands/"]
-    bot --> services["services/"]
-    bot --> models["models/"]
-    bot --> infrastructure["infrastructure/"]
-    
-    commands --> start["start.py"]
-    commands --> add["add.py"]
-    commands --> stats["stats.py"]
-    commands --> settings["settings.py"]
-    commands --> info["info.py"]
-    
-    services --> database["database.py"]
-    services --> scheduler["scheduler.py"]
-    services --> parser["parser.py"]
-    services --> notification["notification.py"]
-    
-    models --> checker["checker.py"]
-    models --> user["user.py"]
-    models --> word["word.py"]
-    models --> stats_models["stats.py"]
-    
-    infrastructure --> telegram_io["telegram_io.py"]
-    infrastructure --> docker["docker/"]
-    infrastructure --> config["config.py"]
-    
-    bot --> tests["tests/"]
-    bot --> ml["ml/"]
+```text
+bot/
+├── main.py
+├── commands/
+│   ├── start.py
+│   ├── add.py
+│   ├── stats.py
+│   ├── settings.py
+│   └── info.py
+│
+├── services/
+│   ├── database.py
+│   ├── scheduler.py
+│   ├── parser.py
+│   └── notification.py
+│
+├── models/
+│   ├── checker.py
+│   ├── user.py
+│   ├── word.py
+│   └── stats.py
+│
+├── infrastructure/
+│   ├── telegram_io.py
+│   ├── docker
+│   └── config.py
+ml
+tests
 ```
 #### Описание структуры проекта
 

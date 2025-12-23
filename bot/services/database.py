@@ -233,7 +233,6 @@ class Database:
                 "action": action,
             }
 
-            # 1. Получаем текущий лог
             result = await session.execute(
                 select(stats.c.activity_log).where(stats.c.user_id == user_id)
             )
@@ -244,10 +243,8 @@ class Database:
             else:
                 activity_log = []
 
-            # 2. Добавляем новое событие
             activity_log.append(new_activity)
 
-            # 3. Upsert
             await session.execute(
                 pg_insert(stats)
                 .values(

@@ -8,6 +8,7 @@ from bot.commands.info import info_router
 from bot.commands.stats import stats_router
 from bot.commands.add import add_router
 from bot.commands.settings import settings_router
+from bot.commands.review import review_router
 
 from bot.services.database import Database
 from bot.services.notification import NotificationService
@@ -40,6 +41,7 @@ async def main():
     dp.include_router(stats_router)
     dp.include_router(add_router)
     dp.include_router(settings_router)
+    dp.include_router(review_router)
 
     print("Everything is ok")
 

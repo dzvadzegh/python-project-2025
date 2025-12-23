@@ -1,5 +1,6 @@
 import asyncio
 from datetime import datetime, timezone, timedelta
+from bot.commands.review import user_pending_word
 
 
 class Scheduler:
@@ -9,8 +10,8 @@ class Scheduler:
         self.tasks = []
 
     def start(self):
-        asyncio.create_task(self.revise_words_task())
-        asyncio.create_task(self.daily_motivation_task())
+        self.tasks.append(asyncio.create_task(self.revise_words_task()))
+        self.tasks.append(asyncio.create_task(self.daily_motivation_task()))
 
     async def stop(self):
         for task in self.tasks:
@@ -47,9 +48,13 @@ class Scheduler:
                             )
                             await self.db.update_word_next_repeat(
                                 user.user_id,
-                                word.word_id,
+                                word.id,
                                 now + timedelta(seconds=interval),
                             )
+                            user_pending_word[user.user_id] = {
+                                "stage": "answer",
+                                "word": word,
+                            }
                             break  # одно слово за проход
 
                 await asyncio.sleep(DEFAULT_INTERVAL)

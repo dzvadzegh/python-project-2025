@@ -26,7 +26,6 @@ async def bot_info(message: Message):
 
         info_message = (
             f"⚙️ *Информация о настройках*\n\n"
-            f"Время уведомлений: {notification_time}\n"
             f"Уведомлений в день: {reminders_per_day}\n"
             f"Временная зона: {timezone}\n"
             f"Язык: {language}\n"

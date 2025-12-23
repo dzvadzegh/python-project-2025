@@ -276,3 +276,27 @@ class Database:
                 histogram_data=row.histogram_data,
                 ml_stats=row.ml_stats,
             )
+
+    async def update_word_after_check(
+        self,
+        user_id: int,
+        word_id: int,
+        next_repeat: datetime,
+        personal_difficulty: float,
+        stability: float,
+        ml_score: float,
+        repeat_count: int,
+    ):
+        async with AsyncSessionLocal() as session:
+            await session.execute(
+                update(words)
+                .where(words.c.word_id == word_id, words.c.user_id == user_id)
+                .values(
+                    next_repeat=next_repeat,
+                    personal_difficulty=personal_difficulty,
+                    stability=stability,
+                    ml_score=ml_score,
+                    repeat_count=repeat_count,
+                )
+            )
+            await session.commit()

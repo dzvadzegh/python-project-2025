@@ -19,30 +19,34 @@ async def bot_settings(message: Message):
         await message.answer(str(e))
         return
 
-    user = await db.get_user(user_id)
-    if not user:
-        await message.answer(
-            "Вы ещё не зарегистрированы.\n"
-            "Нажмите /start, чтобы начать пользоваться ботом."
-        )
-        return
-    settings = user.settings or {}
-    current = settings.get("reminders_per_day", 1)
+    try:
+        user = await db.get_user(user_id)
+        if not user:
+            await message.answer(
+                "Вы ещё не зарегистрированы.\n"
+                "Нажмите /start, чтобы начать пользоваться ботом."
+            )
+            return
+        settings = user.settings or {}
+        current = settings.get("reminders_per_day", 1)
 
-    if new_value is None:
+        if new_value is None:
+            await message.answer(
+                f"⚙️ *Настройки*\n\n"
+                f"🔔 Напоминаний в день: {current}\n\n"
+                f"Чтобы изменить, напишите:\n"
+                f"`/settings число(кол-во напоминаний в день)`\n"
+                f"`Пример ввода: /settings 1`",
+                parse_mode="Markdown",
+            )
+            return
+
+        await db.update_user_setting(user_id, "reminders_per_day", new_value)
+
         await message.answer(
-            f"⚙️ *Настройки*\n\n"
-            f"🔔 Напоминаний в день: {current}\n\n"
-            f"Чтобы изменить, напишите:\n"
-            f"`/settings число(кол-во напоминаний в день)`\n"
-            f"`Пример ввода: /settings 1`",
+            f"Теперь напоминаний в день: {new_value}",
             parse_mode="Markdown",
         )
-        return
-
-    await db.update_user_setting(user_id, "reminders_per_day", new_value)
-
-    await message.answer(
-        f"Теперь напоминаний в день: {new_value}",
-        parse_mode="Markdown",
-    )
+        
+    except Exception:
+        await message.answer("Ошибка подключения к базе данных")

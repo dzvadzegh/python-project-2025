@@ -1,8 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime, timezone
-from aiogram import Bot, Dispatcher
-from aiogram.types import User, Chat, Message, Update
 
 from bot.commands.info import bot_info, info_router
 
@@ -27,29 +25,25 @@ async def test_info_success():
 
     message.answer = AsyncMock()
 
-    message.bot = {}
+    mock_db = AsyncMock()
 
-    mock_db = MagicMock()
-
-    get_user_mock = AsyncMock()
-    get_user_mock.return_value = {
-        "user_id": 123,
-        "username": "test_user",
-        "settings": {
-            "notification_time": "09:00",
-            "reminders_per_day": 3,
-            "timezone": "Europe/Moscow",
-            "language": "русский"
-        }
+    mock_user = MagicMock()
+    mock_user.settings = {
+        "notification_time": "09:00",
+        "reminders_per_day": 3,
+        "timezone": "Europe/Moscow",
+        "language": "русский"
     }
 
-    mock_db.get_user = get_user_mock
+    mock_db.get_user = AsyncMock(return_value=mock_user)
 
-    message.bot = {"db":mock_db}
+    mock_bot = MagicMock()
+    mock_bot.db = mock_db
+    message.bot = mock_bot
 
     await bot_info(message)
 
-    get_user_mock.assert_called_once_with(123)
+    mock_db.get_user.assert_called_once_with(123)
     message.answer.assert_called_once()
 
     call_args = message.answer.call_args
@@ -83,32 +77,23 @@ async def test_info_partial_settings():
     message.from_user.first_name = "Test"
     message.from_user.is_bot = False
 
-    message.chat = MagicMock()
-    message.chat.id = 456
-    message.chat.type = "private"
-
     message.answer = AsyncMock()
 
-    message.bot = {}
-
-    mock_db = MagicMock()
-
-    get_user_mock = AsyncMock()
-    get_user_mock.return_value = {
-        "user_id": 123,
-        "username": "test_user",
-        "settings": {
-            "notification_time": "09:00",
-        }
+    mock_db = AsyncMock()
+    mock_user = MagicMock()
+    mock_user.settings = {
+        "notification_time": "09:00",
     }
 
-    mock_db.get_user = get_user_mock
+    mock_db.get_user = AsyncMock(return_value=mock_user)
 
-    message.bot = {"db":mock_db}
+    mock_bot = MagicMock()
+    mock_bot.db = mock_db
+    message.bot = mock_bot
 
     await bot_info(message)
 
-    get_user_mock.assert_called_once_with(123)
+    mock_db.get_user.assert_called_once_with(123)
     message.answer.assert_called_once()
 
     call_args = message.answer.call_args
@@ -142,14 +127,18 @@ async def test_info_time_formats(time_input, expected):
     message = MagicMock()
     message.from_user = MagicMock(id=123)
     message.answer = AsyncMock()
+    message.text = "/info"
 
     mock_db = AsyncMock()
-    mock_db.get_user = AsyncMock(return_value={
-        "user_id": 123,
-        "settings": {"notification_time": time_input}
-    })
+    mock_user = MagicMock()
+    mock_user.settings = {
+        "notification_time": time_input,
+    }
+    mock_db.get_user = AsyncMock(return_value=mock_user)
 
-    message.bot = {"db": mock_db}
+    mock_bot = MagicMock()
+    mock_bot.db = mock_db
+    message.bot = mock_bot
 
     await bot_info(message)
 
@@ -166,11 +155,14 @@ async def test_info_database_error():
     message.from_user = MagicMock(id=123)
     message.answer = AsyncMock()
     message.reply = AsyncMock()
+    message.text = "/info"
 
     mock_db = AsyncMock()
     mock_db.get_user = AsyncMock(side_effect=Exception("Database connection failed"))
 
-    message.bot = {"db": mock_db}
+    mock_bot = MagicMock()
+    mock_bot.db = mock_db
+    message.bot = mock_bot
 
     await bot_info(message)
 
@@ -196,7 +188,9 @@ async def test_info_user_not_found():
     mock_db = AsyncMock()
     mock_db.get_user = AsyncMock(return_value=None)
 
-    message.bot = {"db": mock_db}
+    mock_bot = MagicMock()
+    mock_bot.db = mock_db
+    message.bot = mock_bot
 
     await bot_info(message)
 
@@ -207,5 +201,7 @@ async def test_info_user_not_found():
     else:
         answer_text = call_args.kwargs.get('text', '')
 
-    assert "❌ Нет информации о пользователе ❌" == answer_text
+    assert "Вы ещё не зарегистрированы." in answer_text
+    assert "Нажмите /start, чтобы начать пользоваться ботом." in answer_text
+
     mock_db.get_user.assert_called_once_with(999)

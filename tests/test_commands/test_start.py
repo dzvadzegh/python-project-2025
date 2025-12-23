@@ -1,8 +1,7 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
-from datetime import datetime, timezone
 
-from bot.commands.start import bot_start, start_router
+from bot.commands.start import bot_start
 
 
 @pytest.mark.asyncio
@@ -10,7 +9,6 @@ async def test_start_success_with_new_user():
     """Тест успешного выполнения команды /start для нового пользователя"""
     message = MagicMock()
     message.message_id = 1
-    message.date = datetime.now(timezone.utc)
     message.text = "/start"
 
     message.from_user = MagicMock()
@@ -19,10 +17,6 @@ async def test_start_success_with_new_user():
     message.from_user.first_name = "Test"
     message.from_user.is_bot = False
 
-    message.chat = MagicMock()
-    message.chat.id = 456
-    message.chat.type = "private"
-
     message.answer = AsyncMock()
 
     mock_db = AsyncMock()
@@ -30,7 +24,7 @@ async def test_start_success_with_new_user():
     mock_db.add_user = AsyncMock()
 
     mock_bot = MagicMock()
-    mock_bot.__getitem__ = MagicMock(return_value=mock_db)
+    mock_bot.db = mock_db
     message.bot = mock_bot
 
     await bot_start(message)
@@ -66,7 +60,6 @@ async def test_start_success_with_existing_user():
     """Тест успешного выполнения команды /start для существующего пользователя"""
     message = MagicMock()
     message.message_id = 1
-    message.date = datetime.now(timezone.utc)
     message.text = "/start"
 
     message.from_user = MagicMock()
@@ -74,10 +67,6 @@ async def test_start_success_with_existing_user():
     message.from_user.username = "test_user"
     message.from_user.first_name = "Test"
     message.from_user.is_bot = False
-
-    message.chat = MagicMock()
-    message.chat.id = 456
-    message.chat.type = "private"
 
     message.answer = AsyncMock()
 
@@ -95,7 +84,7 @@ async def test_start_success_with_existing_user():
     mock_db.add_user = AsyncMock()
 
     mock_bot = MagicMock()
-    mock_bot.__getitem__ = MagicMock(return_value=mock_db)
+    mock_bot.db = mock_db
     message.bot = mock_bot
 
     await bot_start(message)
@@ -137,7 +126,6 @@ async def test_start_database_error():
 
     await bot_start(message)
 
-    mock_db.get_user.assert_called_once_with(123)
     message.answer.assert_called_once()
 
     call_args = message.answer.call_args

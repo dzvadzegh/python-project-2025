@@ -2,8 +2,6 @@ from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import Command
 
-from bot.services.parser import parse_add_command, ParseError
-
 info_router = Router()
 
 

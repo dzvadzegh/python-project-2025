@@ -44,7 +44,7 @@ async def bot_start(message: Message):
                     "last_active": None,  # последняя активность
                 },
                 words_added={},
-                last_active=datetime.utcnow(),
+                last_active=datetime.now(),
                 stats=Stats(user_id=user_id),
                 ml_profile={"learning_rate": 1.0, "difficulty_preference": "medium"},
             )
@@ -57,8 +57,7 @@ async def bot_start(message: Message):
                 "/info - информация о настройках\n\n"
                 "🚀 *Начните с добавления первого слова в словарь с помощью команды /add!*\n"
             )
-            db.add_user(user_id=user.user_id, username=user.username)
-        # user.update_last_active() TODO: разобраться с этим
+            await db.add_user(user_id=user.user_id, username=user.username)
         await message.answer(text=welcome_text, parse_mode="Markdown")
 
     except Exception:

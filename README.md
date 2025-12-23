@@ -172,7 +172,51 @@ tests
 **Stats**  
 Хранит агрегированную статистику пользователя: количество выученных слов, успешность ответов, историю активности и вспомогательные данные для аналитики.
 
+#### Описание моделей проекта:
 
+```mermaid
+---
+title: Схема БД
+---
+erDiagram
+    users {
+        user_id(PRIMARY_KEY) INTEGER
+        username STRING
+        settings JSONB
+        progress JSONB
+        words_added JSONB 
+        last_active TIMESTAMPTZ
+        ml_profile JSONB
+    }
+
+    words {
+        word_id(PRIMARY_KEY) INTEGER 
+        user_id(FOREIGN_KEY) INTEGER 
+        text STRING
+        translation STRING
+        next_repeat TIMESTAMPTZ
+        repeat_count INTEGER 
+        created_at TIMESTAMPTZ 
+        base_difficulty FLOAT 
+        personal_difficulty FLOAT 
+        difficulty FLOAT
+        stability FLOAT 
+        ml_score FLOAT 
+        history JSONB 
+    }
+
+    stats {
+        user_id(PRIMARY_KEY)(FOREIGN_KEY) INTEGER 
+        learned_words INTEGER
+        success_rate FLOAT 
+        activity_log JSONB 
+        histogram_data JSONB 
+        ml_stats JSONB
+    }
+
+ users ||--o{ words : "1 user → N words"
+    users ||--|| stats : "1 user → 1 stat"
+```
 
 ## 4. Работа команды
 

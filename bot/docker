@@ -11,4 +11,4 @@ RUN pip install --no-cache-dir \
     sqlalchemy \
     python-dotenv
 
-CMD ["python", "bot/infrastructure/main.py"]
+CMD ["python", "bot/main.py"]

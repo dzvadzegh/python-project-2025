@@ -94,24 +94,25 @@ class Database:
 
     async def add_user(self, user_id: int, username: str):
         async with AsyncSessionLocal() as session:
-            async with session.begin():
-                await session.execute(
-                    pg_insert(users)
-                    .values(
-                        user_id=user_id,
-                        username=username,
-                        settings={},
-                        progress={},
-                        words_added={},
-                        last_active=datetime.now(timezone.utc),
-                        ml_profile={},
-                    )
-                    .on_conflict_do_nothing()
+            await session.execute(
+                pg_insert(users)
+                .values(
+                    user_id=user_id,
+                    username=username,
+                    settings={},
+                    progress={},
+                    words_added={},
+                    last_active=datetime.now(timezone.utc),
+                    ml_profile={},
                 )
-                await session.execute(
-                    pg_insert(stats).values(user_id=user_id).on_conflict_do_nothing()
-                )
-            await session.close()
+                .on_conflict_do_nothing()
+            )
+
+            await session.execute(
+                pg_insert(stats).values(user_id=user_id).on_conflict_do_nothing()
+            )
+
+            await session.commit()
 
     async def get_user(self, user_id: int):
         async with AsyncSessionLocal() as session:
@@ -150,20 +151,19 @@ class Database:
 
     async def update_user_setting(self, user_id: int, key: str, value):
         async with AsyncSessionLocal() as session:
-            async with session.begin():
-                result = await session.execute(
-                    select(users.c.settings).where(users.c.user_id == user_id)
-                )
-                row = result.fetchone()
-                current_settings = row.settings or {}
-                current_settings[key] = value
-                stmt = (
-                    update(users)
-                    .where(users.c.user_id == user_id)
-                    .values(settings=current_settings)
-                )
-                await session.execute(stmt)
-            await session.close()
+            result = await session.execute(
+                select(users.c.settings).where(users.c.user_id == user_id)
+            )
+            row = result.fetchone()
+            current_settings = row.settings or {}
+            current_settings[key] = value
+            stmt = (
+                update(users)
+                .where(users.c.user_id == user_id)
+                .values(settings=current_settings)
+            )
+            await session.execute(stmt)
+            await session.commit()
 
     async def get_all_users(self):
         async with AsyncSessionLocal() as session:
@@ -174,16 +174,15 @@ class Database:
 
     async def add_word(self, word: str, translation: str, user_id: int):
         async with AsyncSessionLocal() as session:
-            async with session.begin():
-                await session.execute(
-                    insert(words).values(
-                        user_id=user_id,
-                        text=word,
-                        translation=translation,
-                        next_repeat=datetime.now(timezone.utc) + timedelta(days=1),
-                    )
+            await session.execute(
+                insert(words).values(
+                    user_id=user_id,
+                    text=word,
+                    translation=translation,
+                    next_repeat=datetime.now(timezone.utc) + timedelta(days=1),
                 )
-            await session.close()
+            )
+            await session.commit()
 
     async def get_user_words(self, user_id: int):
         async with AsyncSessionLocal() as session:
@@ -218,48 +217,47 @@ class Database:
             next_repeat = datetime.now(timezone.utc) + timedelta(days=1)
 
         async with AsyncSessionLocal() as session:
-            async with session.begin():
-                await session.execute(
-                    update(words)
-                    .where(words.c.word_id == word_id, words.c.user_id == user_id)
-                    .values(next_repeat=next_repeat)
-                )
-            await session.close()
+            await session.execute(
+                update(words)
+                .where(words.c.word_id == word_id, words.c.user_id == user_id)
+                .values(next_repeat=next_repeat)
+            )
+            await session.commit()
 
     # STATS
 
     async def log_activity(self, user_id: int, action: str):
         async with AsyncSessionLocal() as session:
-            async with session.begin():
-                new_activity = {
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                    "action": action,
-                }
+            new_activity = {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "action": action,
+            }
 
-                result = await session.execute(
-                    select(stats.c.activity_log).where(stats.c.user_id == user_id)
+            result = await session.execute(
+                select(stats.c.activity_log).where(stats.c.user_id == user_id)
+            )
+            row = result.fetchone()
+
+            if row and row.activity_log:
+                activity_log = list(row.activity_log)
+            else:
+                activity_log = []
+
+            activity_log.append(new_activity)
+
+            await session.execute(
+                pg_insert(stats)
+                .values(
+                    user_id=user_id,
+                    activity_log=activity_log,
                 )
-                row = result.fetchone()
-
-                if row and row.activity_log:
-                    activity_log = list(row.activity_log)
-                else:
-                    activity_log = []
-
-                activity_log.append(new_activity)
-
-                await session.execute(
-                    pg_insert(stats)
-                    .values(
-                        user_id=user_id,
-                        activity_log=activity_log,
-                    )
-                    .on_conflict_do_update(
-                        index_elements=["user_id"],
-                        set_={"activity_log": activity_log},
-                    )
+                .on_conflict_do_update(
+                    index_elements=["user_id"],
+                    set_={"activity_log": activity_log},
                 )
-            await session.close()
+            )
+
+            await session.commit()
 
     async def get_user_stats(self, user_id: int):
         async with AsyncSessionLocal() as session:
@@ -290,16 +288,15 @@ class Database:
         repeat_count: int,
     ):
         async with AsyncSessionLocal() as session:
-            async with session.begin():
-                await session.execute(
-                    update(words)
-                    .where(words.c.word_id == word_id, words.c.user_id == user_id)
-                    .values(
-                        next_repeat=next_repeat,
-                        personal_difficulty=personal_difficulty,
-                        stability=stability,
-                        ml_score=ml_score,
-                        repeat_count=repeat_count,
-                    )
+            await session.execute(
+                update(words)
+                .where(words.c.word_id == word_id, words.c.user_id == user_id)
+                .values(
+                    next_repeat=next_repeat,
+                    personal_difficulty=personal_difficulty,
+                    stability=stability,
+                    ml_score=ml_score,
+                    repeat_count=repeat_count,
                 )
-            await session.close()
+            )
+            await session.commit()

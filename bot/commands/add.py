@@ -24,7 +24,7 @@ async def bot_add(message: Message):
             await message.answer(str(e), parse_mode="Markdown")
             return
 
-        await db.add_word(word=word, translation=translation, user_id=user_id)
+        await db.add_word(text=word, translation=translation, user_id=user_id)
 
         await db.log_activity(user_id, f"add_word:{word}")
         success_message = (

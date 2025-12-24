@@ -59,13 +59,8 @@ class Checker:
 
         self.word.ml_score = ml_score
         self.word.stability = max(1.0, float(interval_days))
-        if self.word.stability >= 2:
-            await self.db.increment_learned_words(self.word.user_id)
-
         days = max(1, int(round(interval_days)))
-        self.word.next_repeat = datetime.now(datetime.timezone.utc) + timedelta(
-            days=days
-        )
+        self.word.next_repeat = datetime.utcnow() + timedelta(days=days)
 
         # Обновление истории слова
         if hasattr(self.word, "record_history"):

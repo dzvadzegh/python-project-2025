@@ -1,6 +1,7 @@
 import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
+from aiogram.client.default import DefaultBotProperties
 
 from bot.commands.start import start_router
 from bot.commands.info import info_router
@@ -20,7 +21,10 @@ from bot.infrastructure.telegram_io import TelegramIO
 
 
 async def main():
-    bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.MARKDOWN)
+    bot = Bot(
+        token=BOT_TOKEN,
+        default=DefaultBotProperties(parse_mode=ParseMode.MARKDOWN),
+    )
 
     db = Database()
     await db.connect()

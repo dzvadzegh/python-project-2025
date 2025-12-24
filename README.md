@@ -125,8 +125,9 @@ bot/
 │
 ├── infrastructure/
 │   ├── telegram_io.py
-│   ├── docker
 │   └── config.py
+Dockerfile
+docker-compose.yml
 ml
 tests
 ```

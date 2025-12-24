@@ -20,7 +20,10 @@ class NotificationService:
         await self.db.log_activity(user_id, f"reminder:{word_text}")
 
     async def send_motivation(self, user_id: int):
-        text = "✨ *Небольшая мотивация*\n\n" "gege"
+        text = (
+            "✨ *Небольшая мотивация*\n\n"
+            "С каждым выученным словом вы все ближе к цели!"
+        )
 
         await self.telegram_io.send_message(
             chat_id=user_id,

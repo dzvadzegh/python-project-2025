@@ -47,6 +47,6 @@ async def bot_settings(message: Message):
             f"Теперь напоминаний в день: {new_value}",
             parse_mode="Markdown",
         )
-        
+
     except Exception:
         await message.answer("Ошибка подключения к базе данных")

@@ -1,5 +1,5 @@
 import os
-import numpy as np
+import pandas as pd
 import joblib
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -28,12 +28,12 @@ def _load_models():
         _interval_model = joblib.load(interval_path)
         _score_model = joblib.load(score_path)
 
-        print("✅ ML модели успешно загружены")
+        print("ML модели успешно загружены")
 
     except Exception as e:
         _interval_model = None
         _score_model = None
-        print("⚠️ ML модели НЕ загружены, используется fallback")
+        print("ML модели НЕ загружены, используется fallback")
         print(f"Причина: {e}")
 
 
@@ -55,7 +55,7 @@ def predict_interval_and_score(features: dict) -> tuple[float, float]:
 
         return float(interval_days), float(ml_score)
 
-    x = np.array([[features[col] for col in FEATURE_COLS]], dtype=float)
+    x = pd.DataFrame([features], columns=FEATURE_COLS)
 
     interval = float(_interval_model.predict(x)[0])
     score = float(_score_model.predict(x)[0])

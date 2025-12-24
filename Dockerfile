@@ -1,6 +1,6 @@
 FROM python:3.12
 
-WORKDIR /bot
+WORKDIR /app
 
 COPY . .
 
@@ -9,6 +9,9 @@ RUN pip install --no-cache-dir \
     aiohttp \
     asyncpg \
     sqlalchemy \
-    python-dotenv
+    python-dotenv \
+    pandas==2.3.3 \
+    joblib==1.5.2 \
+    scikit-learn==1.7.2
 
-CMD ["python", "bot/main.py"]
+CMD ["python", "-m", "bot.main"]

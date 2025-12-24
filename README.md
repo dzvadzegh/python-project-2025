@@ -109,6 +109,7 @@ bot/
 │   ├── add.py
 │   ├── stats.py
 │   ├── settings.py
+│   ├── review.py
 │   └── info.py
 │
 ├── services/
